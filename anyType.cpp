@@ -4,6 +4,64 @@
 using namespace boost;
 using namespace std;
 
+//will not change the origin value.just get a copy in another type.
+template<typename T>
+bool converseType(T &temp,int originType,	const boost::any m_val) 
+{
+						
+	try
+	{
+
+		switch (originType)
+		{
+
+		case ANY_INT:
+			{
+				 temp = lexical_cast<T>( boost::any_cast<int>(m_val) );
+				 return true;
+			}
+		case ANY_UINT:
+			{
+				temp = lexical_cast<T>( boost::any_cast<unsigned>(m_val) );
+				return true;
+			}
+		case ANY_LONG_64:
+			{
+				temp = lexical_cast<T>( boost::any_cast<long long>(m_val) );
+				return true;
+			}
+		case ANY_DOUBLE:
+			{
+				temp = lexical_cast<T>( boost::any_cast<double>(m_val) );
+				return true;
+			}
+		case ANY_FLOAT:
+			{
+				temp = lexical_cast<T>( boost::any_cast<float>(m_val) );
+					return true;
+			}
+		case ANY_STRING:
+			{
+				temp = lexical_cast<T>( boost::any_cast<string>(m_val) );
+					return true;
+			}
+		default:
+			{
+				//error
+				return false;
+			}
+		}//switch
+	}//try
+	 catch(boost::bad_lexical_cast& e )
+	 {
+		 cout << "anyType::converseType():\n"<<e.what()<<endl; 
+				return false;
+	 }
+	
+}
+
+
+
 anyType::anyType( int _typeNum , string _value  )
 {
  try 
@@ -144,8 +202,12 @@ int anyType::getInt() const
 	}
 	catch(boost::bad_any_cast& e) 
 	{
-	cout << "any_cast fail,cannot converse into int type"<<e.what()<<endl; 
-	return -1;
+	//cout << "any_cast fail,cannot converse into int type"<<e.what()<<endl; 
+	//return -1;
+	int temp;
+	converseType(temp,this->getType(),m_value);
+	return temp;
+
 	}
 }
 
@@ -158,8 +220,11 @@ unsigned int anyType::getUInt() const
 	}
 	catch(boost::bad_any_cast& e) 
 	{
-	cout << "any_cast fail,cannot converse into unsigned int type"<<e.what()<<endl; 
-		return -1;
+//	cout << "any_cast fail,cannot converse into unsigned int type"<<e.what()<<endl; 
+//		return -1;
+	unsigned temp;
+	converseType(temp,this->getType(),m_value);
+	return temp;
 	}
 }
 
@@ -172,8 +237,11 @@ long long anyType::getLong() const
 	}
 	catch(boost::bad_any_cast& e) 
 	{
-	cout << "any_cast fail,cannot converse into  long long type"<<e.what()<<endl;
-		return -1;
+//	cout << "any_cast fail,cannot converse into  long long type"<<e.what()<<endl;
+//		return -1;
+	long long temp;
+	converseType(temp,this->getType(),m_value);
+	return temp;
 	}
 }
 
@@ -186,8 +254,12 @@ double anyType::getDouble() const
 	}
 	catch(boost::bad_any_cast& e) 
 	{
-	cout << "any_cast fail,cannot converse into double type"<<e.what()<<endl; 
-		return -1;
+	//cout << "any_cast fail,cannot converse into double type"<<e.what()<<endl; 
+	//	return -1;
+	double  temp;
+	converseType(temp,this->getType(),m_value);
+	return temp;
+		
 	}
 }
 float anyType::getFloat() const
@@ -199,8 +271,11 @@ float anyType::getFloat() const
 	}
 	catch(boost::bad_any_cast& e) 
 	{
-	cout << "any_cast fail,cannot converse into float type"<<e.what()<<endl; 
-		return -1;
+//	cout << "any_cast fail,cannot converse into float type"<<e.what()<<endl; 
+//		return -1;
+	float  temp;
+	converseType(temp,this->getType(),m_value);
+	return temp;
 	}
 }
 string anyType::getString() const
@@ -211,24 +286,25 @@ string anyType::getString() const
 	}
 	catch(boost::bad_any_cast& e) 
 	{
-	cout << "any_cast fail,cannot converse into string type"<<e.what()<<endl; 
-	return "error";
+//	cout << "any_cast fail,cannot converse into string type"<<e.what()<<endl; 
+//	return "error";
+	string  temp;
+	converseType(temp,this->getType(),m_value);
+	return temp;
 	}
 }
 
 int anyType::getType() const
 {
-	string typeName = m_value.type().name();
-	if(typeName == "bool") return ANY_BOOL;
-	else if(typeName == "int") return ANY_INT;
-	else if(typeName == "unsigned int") return ANY_UINT;
-	else if(typeName == "__int64") return ANY_LONG_64;
-	else if(typeName == "double") return ANY_DOUBLE;
-	else if(typeName == "float") return  ANY_FLOAT;
-	else if(typeName == "string") return ANY_STRING;
+	if(m_value.type() == typeid(bool)) return ANY_BOOL;
+	else if(m_value.type() == typeid(int)) return ANY_INT;
+	else if(m_value.type() == typeid(unsigned int)) return ANY_UINT;
+	else if(m_value.type() == typeid(long long)) return ANY_LONG_64;
+	else if(m_value.type() == typeid(double)) return ANY_DOUBLE;
+	else if(m_value.type() == typeid(float)) return  ANY_FLOAT;
+	else if(m_value.type() == typeid(string)) return ANY_STRING;
 	else return -1;
 }
-
 
 //OpNum used for build exception
 template <template <typename Type> class Operator, int OpNum>
@@ -462,10 +538,37 @@ bool anyType::binary_comp_op(const anyType &b) const
 			default:
 				{
 					// throw
+					return false;
 				}
 			}//switch b.type
+
 			break;
 		}//case STRING
 	
 	}//switch this.type
 }
+
+//int main()
+//{
+//	anyType A(ANY_INT,"123");
+//	anyType B(ANY_FLOAT,"123.5");
+//	if(A<=B)
+//	{
+//		cout<<"A<=B\n";
+//	}
+//	else
+//	{
+//		cout<<"error\n";
+//	}
+//	anyType X(ANY_INT,"123");
+//	anyType Y(ANY_STRING,"123");
+//	if(X==Y)
+//	{
+//		cout<<"X==Y\n";
+//	}
+//	else
+//	{
+//		cout<<"error\n";
+//	}
+//	system("pause");
+//}

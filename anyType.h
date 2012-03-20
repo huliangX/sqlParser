@@ -41,6 +41,10 @@ public:
 	float		getFloat() const;
 	std::string		getString() const;
 
+	
+//template <typename T>
+//bool converseType(T &temp);
+
 
     template <template <typename Type> class Operator, int OpNum>
     bool		binary_comp_op(const anyType &b) const;
