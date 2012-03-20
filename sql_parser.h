@@ -10,7 +10,7 @@
 #include <boost/spirit/core.hpp>
 #include <boost/spirit/include/classic_ast.hpp>
 
-#include <boost/variant.hpp>
+#include "anyType.h"
 
 
 using namespace std;
@@ -21,16 +21,16 @@ typedef std::string::const_iterator InputIterT;
 typedef tree_match<InputIterT> ParseTreeMatchT;
 typedef ParseTreeMatchT::const_tree_iterator TreeIterT;
 
-typedef boost::variant<bool,int,unsigned int,long,unsigned long,float,double,string> DPLVariant;
+//typedef boost::variant<bool,int,unsigned int,long,unsigned long,float,double,string> DPLVariant;
 
 enum node_t{  BOOL=0,INT ,LONG,DOUBLE,STRING, OP,FUNC,PLACEHOLDER };
 
 
 class CObject
 {
-	//DPLVariant
+
 public:
-         virtual string GetValueByName(string strName)=0;   
+         virtual anyType GetValueByName(string strName)=0;   
          virtual bool operator==(CObject* obj) const{ return (obj==this); }
          virtual bool operator<(CObject* obj) const{ return (obj<this);  }
 };
@@ -40,15 +40,13 @@ class ParseNodeBase
 public:
 	 node_t NodeType;
 
-	 //DPLVariant value;  // include varname and value and opstr
-
-	 string value;  // 在计算的时候再进行类型转换
+	 anyType value;  
 
 	 virtual ~ParseNodeBase(){}
 
 	 virtual node_t GetNodeType(){ return NodeType; }
 
-	 virtual string GetValue() { return value; }
+	 virtual anyType GetValue() { return value; }
 //	 virtual bool evaluate(CObject *obj) const = 0;
 };
 
@@ -62,11 +60,8 @@ public:
 	
 	 TreeIterT ast_node_ptr; 
 	 node_t NodeType;
-	 
 
-	 //DPLVariant value;  // include varname and value and opstr
-
-	 string value;  // 在计算的时候再进行类型转换
+	 anyType value;  
 
 	 int placeholder_index;  
 
@@ -82,7 +77,7 @@ public:
     virtual ~ParseNode(){}
     
 	virtual node_t GetNodeType();
-	virtual string GetValue() { return value; }
+	virtual anyType GetValue() { return value; }
  //   virtual bool evaluate(CObject *obj) const =0;
 };
 
@@ -92,8 +87,8 @@ public:
 		 TreeIterT const ast_node_ptr; 
 		 node_t NodeType;
        string funcname;
-     //  vector<DPLVariant> paramlist; 
-	   vector<string> paramlist;
+
+	   vector<string> paramlist;  //  default parameters is string , if paramlist need to distinguish other type,we should change the grammar
 
 	ParseFunc( TreeIterT const& i, string _funcname, vector<string> _paramlist);
 	virtual node_t GetNodeType();

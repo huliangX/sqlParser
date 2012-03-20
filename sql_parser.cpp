@@ -1,11 +1,14 @@
 #include "sql_parser.h"
 #include "sqlGrammar.hpp"
 
+
 #include <fstream>
 #include <map>
 #include <iostream>
 #include <sstream>
 #include <cwctype>
+
+
 
 
  string& trim(string& s) {
@@ -28,13 +31,78 @@
  ParseNode::ParseNode( TreeIterT const& i ,node_t _Type,int _index )
 	 	 :ast_node_ptr(i),NodeType(_Type),placeholder_index(_index)
  {
-	value = string(i->value.begin(), i->value.end());
+	 TypeNum_t valueType;
+	 switch (_Type)
+	 {
+	 case node_t::BOOL:
+		 {
+			 valueType = ANY_BOOL;
+			 break;
+		 }
+	 case node_t::INT:
+		 {
+			 valueType = ANY_INT;
+			 break;
+		 }
+	 case node_t::LONG:
+		 {
+			 valueType = ANY_LONG_64;
+			 break;
+		 }
+	 case node_t::DOUBLE:
+		 {
+			 valueType = ANY_DOUBLE;
+			 break;
+		 }
+	 case node_t::OP:
+	 case node_t::STRING:
+	 case node_t::PLACEHOLDER:
+	 default:
+		 {
+			 valueType = ANY_STRING;
+			 break;
+		 }
+	 }
+	 value.setValue( valueType ,string(i->value.begin(), i->value.end()) );
+	
  }
 
  ParseNode::ParseNode( TreeIterT const& i ,node_t _Type,int _index ,ParseNodeBase* _left,ParseNodeBase* _right)
 	 	 :ast_node_ptr(i),NodeType(_Type),placeholder_index(_index),left(_left),right(_right)
  {
-	value = string(i->value.begin(), i->value.end());
+	 	 TypeNum_t valueType;
+	 switch (_Type)
+	 {
+	 case node_t::BOOL:
+		 {
+			 valueType = ANY_BOOL;
+			 break;
+		 }
+	 case node_t::INT:
+		 {
+			 valueType = ANY_INT;
+			 break;
+		 }
+	 case node_t::LONG:
+		 {
+			 valueType = ANY_LONG_64;
+			 break;
+		 }
+	 case node_t::DOUBLE:
+		 {
+			 valueType = ANY_DOUBLE;
+			 break;
+		 }
+	 case node_t::OP:
+	 case node_t::STRING:
+	 case node_t::PLACEHOLDER:
+	 default:
+		 {
+			 valueType = ANY_STRING;
+			 break;
+		 }
+	 }
+	 value.setValue( valueType ,string(i->value.begin(), i->value.end()) );
  }
 
 
