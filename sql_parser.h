@@ -23,7 +23,7 @@ typedef ParseTreeMatchT::const_tree_iterator TreeIterT;
 
 //typedef boost::variant<bool,int,unsigned int,long,unsigned long,float,double,string> DPLVariant;
 
-enum node_t{  BOOL=0,INT ,LONG,DOUBLE,STRING, OP,FUNC,PLACEHOLDER };
+enum node_t{  BOOL=0,INT ,LONG,DOUBLE,STRING,VARNAME ,OP,FUNC,PLACEHOLDER };
 
 
 class CObject
@@ -40,14 +40,14 @@ class ParseNodeBase
 public:
 	 node_t NodeType;
 
-	 anyType value;  
+	 anyType* m_valuePtr;  
 
 	 virtual ~ParseNodeBase(){}
 
 	 virtual node_t GetNodeType(){ return NodeType; }
 
-	 virtual anyType GetValue() { return value; }
-//	 virtual bool evaluate(CObject *obj) const = 0;
+	 virtual anyType* GetValue() { return m_valuePtr; }
+	 virtual anyType evaluate(CObject *obj) const = 0;
 };
 
 
@@ -61,7 +61,7 @@ public:
 	 TreeIterT ast_node_ptr; 
 	 node_t NodeType;
 
-	 anyType value;  
+	 anyType* m_valuePtr;   
 
 	 int placeholder_index;  
 
@@ -77,22 +77,24 @@ public:
     virtual ~ParseNode(){}
     
 	virtual node_t GetNodeType();
-	virtual anyType GetValue() { return value; }
- //   virtual bool evaluate(CObject *obj) const =0;
+	virtual anyType* GetValue() { return m_valuePtr; }
+    virtual anyType evaluate(CObject *obj) const ;
 };
 
 class ParseFunc:public ParseNodeBase
 {
 public:
+
+
 		 TreeIterT const ast_node_ptr; 
 		 node_t NodeType;
        string funcname;
 
-	   vector<string> paramlist;  //  default parameters is string , if paramlist need to distinguish other type,we should change the grammar
+	   vector<anyType*> paramlist;  
 
-	ParseFunc( TreeIterT const& i, string _funcname, vector<string> _paramlist);
+	ParseFunc( TreeIterT const& i, string _funcname, vector<anyType*> _paramlist);
 	virtual node_t GetNodeType();
- //   virtual bool evaluate(CObject *obj) const =0;
+    virtual anyType evaluate(CObject *obj) const ;
 };
 
 //============================================================================================

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <cwctype>
+#include <boost/lexical_cast.hpp>
 
 
 
@@ -34,75 +35,75 @@
 	 TypeNum_t valueType;
 	 switch (_Type)
 	 {
-	 case node_t::BOOL:
+	 case BOOL:
 		 {
 			 valueType = ANY_BOOL;
 			 break;
 		 }
-	 case node_t::INT:
+	 case INT:
 		 {
 			 valueType = ANY_INT;
 			 break;
 		 }
-	 case node_t::LONG:
+	 case LONG:
 		 {
 			 valueType = ANY_LONG_64;
 			 break;
 		 }
-	 case node_t::DOUBLE:
+	 case DOUBLE:
 		 {
 			 valueType = ANY_DOUBLE;
 			 break;
 		 }
-	 case node_t::OP:
-	 case node_t::STRING:
-	 case node_t::PLACEHOLDER:
+	 case OP:
+	 case STRING:
+	 case PLACEHOLDER:
 	 default:
 		 {
 			 valueType = ANY_STRING;
 			 break;
 		 }
 	 }
-	 value.setValue( valueType ,string(i->value.begin(), i->value.end()) );
+	 m_valuePtr = new anyType( valueType ,string(i->value.begin(), i->value.end()) );
 	
  }
 
  ParseNode::ParseNode( TreeIterT const& i ,node_t _Type,int _index ,ParseNodeBase* _left,ParseNodeBase* _right)
 	 	 :ast_node_ptr(i),NodeType(_Type),placeholder_index(_index),left(_left),right(_right)
  {
-	 	 TypeNum_t valueType;
+	 TypeNum_t valueType;
 	 switch (_Type)
 	 {
-	 case node_t::BOOL:
+	 case BOOL:
 		 {
 			 valueType = ANY_BOOL;
 			 break;
 		 }
-	 case node_t::INT:
+	 case INT:
 		 {
 			 valueType = ANY_INT;
 			 break;
 		 }
-	 case node_t::LONG:
+	 case LONG:
 		 {
 			 valueType = ANY_LONG_64;
 			 break;
 		 }
-	 case node_t::DOUBLE:
+	 case DOUBLE:
 		 {
 			 valueType = ANY_DOUBLE;
 			 break;
 		 }
-	 case node_t::OP:
-	 case node_t::STRING:
-	 case node_t::PLACEHOLDER:
+	 case OP:
+	 case STRING:
+	 case PLACEHOLDER:
 	 default:
 		 {
 			 valueType = ANY_STRING;
 			 break;
 		 }
 	 }
-	 value.setValue( valueType ,string(i->value.begin(), i->value.end()) );
+	 m_valuePtr = new anyType( valueType ,string(i->value.begin(), i->value.end()) );
  }
 
 
@@ -111,7 +112,7 @@
 	return NodeType;
  }
 
- ParseFunc::ParseFunc( TreeIterT const& i ,string _funcname, vector<string> _paramlist)
+ ParseFunc::ParseFunc( TreeIterT const& i ,string _funcname, vector<anyType*> _paramlist)
 	 :ast_node_ptr(i),funcname(_funcname),paramlist(_paramlist)
  {
 
@@ -365,9 +366,15 @@ ParseNodeBase* sql_parser::BuildTreeStackByAST( TreeIterT const& i ,int &index)
 
 		 }
 		case string_const_id:
-		case varname_id:
 		{
 			tempNode = new ParseNode( i, STRING, -1 );
+			m_treestack.push_back(tempNode);
+			return tempNode;
+
+		 }
+		case varname_id:
+		{
+			tempNode = new ParseNode( i, VARNAME, -1 );
 			m_treestack.push_back(tempNode);
 			return tempNode;
 
@@ -395,8 +402,8 @@ ParseNodeBase* sql_parser::BuildTreeStackByAST( TreeIterT const& i ,int &index)
     case function_identifier_id:
     {
 	std::string funcname(i->value.begin(), i->value.end());
-	//std::vector<DPLVariant> paramlist;
-	std::vector<string> paramlist;
+
+	std::vector<anyType*> paramlist;
 
 
 	if (i->children.size() > 0)
@@ -411,16 +418,60 @@ ParseNodeBase* sql_parser::BuildTreeStackByAST( TreeIterT const& i ,int &index)
 				{
 					switch ( ci->value.id().to_long() )
 					{
-					case string_const_id:
+					case boolean_const_id:
 						  {
-							  paramlist.push_back(std::string(ci->value.begin(), ci->value.end()));
+							  // why we recognized it as a boolean? beause it looks lick  true | false ?  
+							  string temp = string(ci->value.begin(), ci->value.end());
+							  if(temp == "true"|| temp == "TRUE")
+							  paramlist.push_back( new anyType( ANY_BOOL, true ));
+
+							  else if(temp == "false"|| temp == "FALSE")
+							  paramlist.push_back( new anyType( ANY_BOOL, false));
+							  else
+							  {
+								  //throw 
+							  }
 							  continue;
 						  }
-					//case : int
-					//case : double
+					case integer_const_id:
+						  {  
+							  paramlist.push_back(  new
+										  anyType( ANY_INT, 
+													boost::lexical_cast<int>( string(ci->value.begin(), ci->value.end()) ) 
+												 )
+												);
+							  continue;
+
+						  }
+					case long_const_id:
+						  {  
+							  paramlist.push_back(  new
+											  anyType( ANY_LONG_64, 
+													   boost::lexical_cast<long long>( string(ci->value.begin(), ci->value.end()) ) 
+												 )
+												);
+							  continue;
+
+						  }
+					case double_const_id:
+						  {  
+							  paramlist.push_back(  new
+										  anyType( ANY_DOUBLE, 
+												   boost::lexical_cast<double>( string(ci->value.begin(), ci->value.end()) ) 
+												 )
+												);
+							  continue;
+
+						  }
+					case string_const_id:
+					case varname_id:
+						  {
+							  paramlist.push_back( new anyType( ANY_STRING,string(ci->value.begin(), ci->value.end()) ));
+							  continue;
+						  }
 					default:
 						{
-							  paramlist.push_back(std::string(ci->value.begin(), ci->value.end()));
+							  paramlist.push_back( new anyType( ANY_STRING,string(ci->value.begin(), ci->value.end()) ));
 							  continue;
 						}
 					}
@@ -434,7 +485,7 @@ ParseNodeBase* sql_parser::BuildTreeStackByAST( TreeIterT const& i ,int &index)
 	    else
 	    {
 		// just one subnode and its not a full expression list
-		 paramlist.push_back(std::string(paramlistchild->value.begin(), paramlistchild->value.end()));
+		 paramlist.push_back( new anyType( ANY_STRING,string(paramlistchild->value.begin(), paramlistchild->value.end()) ));
 	    }
 
 
@@ -449,7 +500,7 @@ ParseNodeBase* sql_parser::BuildTreeStackByAST( TreeIterT const& i ,int &index)
     default:
 		{
 		cout<<"Unknown AST parse tree node found. This should never happen."<<endl;
-//	throw(ExpressionParserException("Unknown AST parse tree node found. This should never happen."));
+		//	throw(ExpressionParserException("Unknown AST parse tree node found. This should never happen."));
 		return tempNode =0;
 		}
 	}
@@ -468,7 +519,7 @@ void sql_parser::DumpTreeStack()
 		}
 		else
 		{
-			cout<<"ParseNode: "<< ((ParseNode*)curNode)->value<<endl;
+			cout<<"ParseNode: "<< *(((ParseNode*)curNode)->m_valuePtr) <<"Type: "<<((ParseNode*)curNode)->NodeType<<endl;
 		}
 		m_treestack.pop_front();
 	}
@@ -481,6 +532,72 @@ void sql_parser::SetSQLString(const string &s)
 	metaString = s; 
 }
 
+
+
+ anyType ParseNode::evaluate(CObject *obj) const
+{
+	//{  BOOL=0,INT ,LONG,DOUBLE,STRING,VARNAME ,OP,FUNC,PLACEHOLDER }
+	switch( NodeType )	
+	{
+	case BOOL:
+	case INT:
+	case LONG:
+	case DOUBLE:
+	case STRING:
+		{
+			return *m_valuePtr;
+		}
+	case VARNAME:
+		{
+			return obj->GetValueByName( m_valuePtr->getString() );
+		}
+	case OP:
+		{
+			//can deal with "Var in DMS(a,b,c)" except "Var in (a,b,c)"
+			anyType vl = left->evaluate(obj); //value
+			anyType vr = right->evaluate(obj);		
+			string opStr = m_valuePtr->getString();
+
+			if(opStr == "==") return anyType(ANY_BOOL, vl==vr );
+			else if(opStr == "!=")	return anyType(ANY_BOOL, vl!=vr );
+			else if(opStr == ">=")  return anyType(ANY_BOOL, vl>=vr );
+			else if(opStr == "<=") return anyType(ANY_BOOL, vl<=vr );
+			else if(opStr == ">") return anyType(ANY_BOOL, vl>vr );
+			else if(opStr == "<") return anyType(ANY_BOOL, vl<vr );
+			else if(opStr == "or" || opStr == "OR") 
+			{
+				if( vl.getType()!=ANY_BOOL || vr.getType()!=ANY_BOOL )
+				{
+					//throw
+				}
+				else
+					return anyType(ANY_BOOL, vl.getBoolean() || vr.getBoolean() );
+			}
+			else if(opStr == "and" || opStr == "AND")
+			{
+				if( vl.getType()!=ANY_BOOL || vr.getType()!=ANY_BOOL )
+				{
+					//throw
+				}
+				else
+					return anyType(ANY_BOOL, vl.getBoolean() && vr.getBoolean() );
+			}
+			else{ //throw illegal op 
+				}
+
+		}
+	
+	default: 
+		{
+			// throw illegal node type
+		}
+	}
+}
+
+ anyType ParseFunc::evaluate(CObject *obj) const
+{
+	return  anyType(ANY_BOOL,true );
+}
 
 int main()
 { 
