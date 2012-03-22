@@ -9,6 +9,9 @@
 #include <stdexcept>
 #include <functional>
 
+#include <utility>
+#include <algorithm>
+
 #include <iostream>
 using namespace std;
 
@@ -22,12 +25,37 @@ class anyType
 {
 public:
 
+
 	//may occar exception when call function lexical 
-	anyType( int _typeNum = ANY_STRING, string _value = "");
+	template<typename T>
+	anyType( int _typeNum , T _value  )
+	{
+	switch(_typeNum)
+	{
+	case ANY_BOOL:
+	case ANY_INT:
+	case ANY_LONG_64:
+	case ANY_DOUBLE:
+	case ANY_FLOAT:
+	case ANY_STRING:
+	case ANY_UINT:
+		m_value = _value;
+	default:
+		{
+			//invalid type
+			//throw
+		}
+	}
+		
+	}
+
+
+	anyType() {}
+
 	~anyType(void);
 
 
-	
+	//we should use this func when actually type is may not according with _typeNum
 	void setValue( int _typeNum = ANY_STRING,string _value = "");
 	int getType() const;
 
@@ -42,39 +70,37 @@ public:
 	std::string		getString() const;
 
 	
-//template <typename T>
-//bool converseType(T &temp);
 
 
     template <template <typename Type> class Operator, int OpNum>
-    bool		binary_comp_op(const anyType &b) const;
+    bool	binary_comp_op(const anyType &b) const;
 
 
 
-	inline bool operator==(const anyType &b) const
-    {
-	return binary_comp_op<std::equal_to, EQ>(b);
-    }
-	inline bool operator!=(const anyType &b) const
-    {
-	return binary_comp_op<std::not_equal_to, NE>(b);
-    }
-    inline bool operator<(const anyType &b) const
-    {
-	return binary_comp_op<std::less, LT>(b);
-    }
-    inline bool operator>(const anyType &b) const
-    {
-		return binary_comp_op<std::greater, GT>(b);
-    }
-    inline bool operator<=(const anyType &b) const
-    {
-		return binary_comp_op<std::less_equal, LE>(b);
-    }
-    inline bool operator>=(const anyType &b) const
-    {
-		return binary_comp_op<std::greater_equal, GE>(b);
-    }
+ inline bool operator==(const anyType &b) const
+{
+return binary_comp_op<std::equal_to, EQ>(b);
+}
+ inline bool operator!=(const anyType &b) const
+{
+return binary_comp_op<std::not_equal_to, NE>(b);
+}
+ inline bool operator<(const anyType &b) const
+{
+return binary_comp_op<std::less, LT>(b);
+}
+ inline bool operator>(const anyType &b) const
+{
+	return binary_comp_op<std::greater, GT>(b);
+}
+ inline bool operator<=(const anyType &b) const
+{
+	return binary_comp_op<std::less_equal, LE>(b);
+}
+ inline bool operator>=(const anyType &b) const
+{
+	return binary_comp_op<std::greater_equal, GE>(b);
+}
 
 
 	 friend inline std::ostream& operator<<(ostream & os,const anyType &as)

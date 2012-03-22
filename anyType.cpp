@@ -62,62 +62,6 @@ bool converseType(T &temp,int originType,	const boost::any m_val)
 
 
 
-anyType::anyType( int _typeNum , string _value  )
-{
- try 
- {  
-	switch(_typeNum)
-	{
-	case ANY_BOOL:
-		 {
-			 m_value =  lexical_cast<bool>(_value);
-			 return;
-		 }
-	case ANY_INT:
-		{
-			 m_value =  lexical_cast<int>(_value);
-			 return;
-		}
-	case ANY_LONG_64:
-		{
-			 m_value =  lexical_cast<long long>(_value);
-			 return;
-		}
-	case ANY_DOUBLE:
-		{
-			 m_value =  lexical_cast<double>(_value);
-			 return;
-		}
-	case ANY_FLOAT:
-		{
-			 m_value =  lexical_cast<float>(_value);
-			 return;
-		}
-	case ANY_STRING:
-		{
-			 m_value =  _value;
-			 return;
-		}
-
-	case ANY_UINT:
-		{
-			 m_value =  lexical_cast<unsigned int>(_value);
-			 return;
-		}
-	default:
-		{
-			//throw
-		}
-
-	} //switch
- }//try
- catch(boost::bad_lexical_cast& e )
- {
-	 cout << "anyType initail error:!\n"<<e.what()<<endl; 
- }
-}
-
-
 
 void anyType::setValue( int _typeNum , string _value  )
 {
@@ -547,6 +491,27 @@ bool anyType::binary_comp_op(const anyType &b) const
 	
 	}//switch this.type
 }
+
+//enum TypeOp_t { EQ,NE,LT,GT,LE,GE };
+
+/// Forced instantiation of binary_comp_op for AnyScalar::equal_to()
+template bool anyType::binary_comp_op<std::equal_to, EQ>(const anyType &b) const;
+
+/// Forced instantiation of binary_comp_op for AnyScalar::not_equal_to()
+template bool anyType::binary_comp_op<std::not_equal_to, NE>(const anyType &b) const;
+
+/// Forced instantiation of binary_comp_op for AnyScalar::less()
+template bool anyType::binary_comp_op<std::less, LT>(const anyType &b) const;
+
+/// Forced instantiation of binary_comp_op for AnyScalar::greater()
+template bool anyType::binary_comp_op<std::greater, GT>(const anyType &b) const;
+
+/// Forced instantiation of binary_comp_op for AnyScalar::less_equal()
+template bool anyType::binary_comp_op<std::less_equal, LE>(const anyType &b) const;
+
+/// Forced instantiation of binary_comp_op for AnyScalar::greater_equal()
+template bool anyType::binary_comp_op<std::greater_equal, GE>(const anyType &b) const;
+
 
 //int main()
 //{
